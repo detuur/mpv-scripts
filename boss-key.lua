@@ -2,12 +2,29 @@
 -- the boss key (default 'b') is pressed.
 -- Can be overwriten in input.conf as follows:
 -- KEY script-binding boss-key
+-- xdotool is required on Xorg(Linux)
+
+local platform = nil --set to 'linux', 'windows' or 'macos' to override automatic assign
+if not platform then
+  local o = {}
+  if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
+    platform = 'windows'
+  elseif mp.get_property_native('options/input-app-events', o) ~= o then
+    platform = 'macos'
+  else
+    platform = 'linux'
+  end
+end
 
 utils = require 'mp.utils'
 
 function boss_key()
 	mp.set_property_native("pause", true)
-	minimize_win32()
+	if platform == 'windows' then
+	    minimize_win32()
+	elseif platform == 'linux' then
+	    utils.subprocess({ args = {'xdotool', 'getactivewindow', 'windowminimize'} })
+	end
 end
 
 function minimize_win32()
