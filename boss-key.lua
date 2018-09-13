@@ -1,3 +1,6 @@
+-- AUTHORS: detuur, zaza42
+-- link: https://github.com/detuur/mpv-scripts
+
 -- This script minimises and pauses the window when
 -- the boss key (default 'b') is pressed.
 -- Can be overwriten in input.conf as follows:
@@ -18,6 +21,7 @@ end
 
 utils = require 'mp.utils'
 
+-- TODO: macOS implementation?
 function boss_key()
 	mp.set_property_native("pause", true)
 	if platform == 'windows' then
@@ -27,6 +31,10 @@ function boss_key()
 	end
 end
 
+-- This function is still mind-boggingly slow. It's because we need to compile
+-- the function call to the win32 API every time we run it. This takes about
+-- a second.
+-- TODO: cut down on this downtime
 function minimize_win32()
 	local res = utils.subprocess({
 		args = {'powershell', '-NoProfile', '-Command', [[& {
