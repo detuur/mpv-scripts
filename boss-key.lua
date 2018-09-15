@@ -48,14 +48,14 @@ if platform == 'windows' then
       args = {'powershell', '-NoProfile', '-Command', [[&{
 $bosspid = ]]..utils.getpid()..[[
 
-# Create the named pipe
+# Construct the named pipe's name
 $pipename = -join('mpv-boss-key-',$bosspid)
 $fullpipename = -join("\\.\pipe\", $pipename)
 
 # This will run in a separate thread
 $minimizeloop = {
     param($pipename, $bosspid)
-    # Create the named pipe and buffer
+    # Create the named pipe
     $pipe = new-object System.IO.Pipes.NamedPipeServerStream($pipename)
 
     # Compile the Win32 API function call
@@ -90,7 +90,7 @@ while($true) {
     Start-Sleep 1
     if ($bossproc.HasExited) { $exitsequence.Invoke() }
 }
-} > R:\pipedebug\log]]}})
+}]]}})
 end
 
 mp.add_key_binding('b', 'boss-key', boss_key)
