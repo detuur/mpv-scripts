@@ -32,17 +32,15 @@ function boss_key()
 	end
 end
 
--- Windows is a princess (a very ugly one at that) and needs an external process
--- to minimize mpv, with which we communicate through named pipes. I spent an
--- entire day shouting at my screen to arrive at the code below. This went
--- through several complete rewrites as every iteration broke in subtly
--- different ways. Did you know that Powershell and CMD's echo commands behave
--- slightly differently, one refusing to properly write to some streams where
--- the other doesn't? Did you know Powershell's Events and any kind of async
--- is absolute DOG SHIT which will happily chooch in an interactive session only
--- to shit in your face when put inside a script? Honestly I could write several
--- kb about the bullshit I've encountered but it's past midnight and I just want
--- to watch my weeb shit. Fuck you microsoft.
+-- The only way to minimize the window in Windows is through a compiled Win32
+-- API call. So we open an async powershell session, define the function call,
+-- compile it, and then wait for a signal from this script to execute the call.
+-- Signaling is done through named pipes, which to my surprise were present on
+-- Windows. Not to my surprise, they didn't work reliably. Writing to the pipe
+-- from PS or CMD yields different results, for example. In addition, PS's
+-- Events and other async were extremely finnicky. Because of these reasons,
+-- and after many, many rewrites, I've arrived at the unorthodox mess that is
+-- the code below. It's not pretty, but at l(e)ast it works reliably.
 if platform == 'windows' then
     utils.subprocess_detached({
       args = {'powershell', '-NoProfile', '-Command', [[&{
@@ -76,7 +74,7 @@ $minimizeloop = {
 
 # Exiting this monstrosity (THANKS POWERSHELL FOR BROKEN ASYNC) is surprisingly
 # cumbersome. It took literal hours to find something that didn't spontaneously
-# combust. Fuck windows.
+# combust.
 $bossproc = Get-Process -pid $bosspid -ErrorAction SilentlyContinue
 $exitsequence = {
     &{echo q > $fullpipename} 2> $null
