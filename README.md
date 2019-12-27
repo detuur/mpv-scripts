@@ -21,6 +21,6 @@ There are three default keybinds:
  - `H` (`Shift+h`): Cycle between the pixel formats available
  - `Ctrl+h`: Toggle between linear and logarithmic levels
 
-These keybinds can be changed or commented out at the bottom of this file.
+These keybinds can be changed or commented out at the bottom of the script.
 
 ![Shamelessly stolen from ffmpeg's wiki](https://trac.ffmpeg.org/raw-attachment/wiki/Histogram/histogram_overlay.jpg)
