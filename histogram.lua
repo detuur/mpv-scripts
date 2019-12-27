@@ -4,9 +4,9 @@
 
 -- This script exposes a configurable way to overlay ffmpeg histograms in mpv.
 
--- There is a substantial amount of config available, which should go into
--- $MPV_HOME/lua-settings/histogram.conf. Check out the template conf file in
--- the linked repo.
+-- There is a substantial amount of config available, but this script does
+-- *not* support config files, because of the nested options. Please edit the
+-- options in the `opts` array below.
 
 -- There are three default keybinds:
 --  h - Toggle the histogram on/off
@@ -14,31 +14,43 @@
 --  Ctrl+h - Toggle between linear and logarithmic levels
 -- These keybinds can be changed or commented out at the bottom of this file.
 
--- Documentation of options: https://ffmpeg.org/ffmpeg-filters.html#histogram
-
-local mp = require 'mp'
-local opt = require 'mp.options'
-local msg = require 'mp.msg'
-
 local opts = {
+    -- These options directly control the `histogram` filter in ffmpeg, consult
+    -- its options at this link: https://ffmpeg.org/ffmpeg-filters.html#histogram
     hist = {
-        level_height = nil,
-        scale_height = nil,
-        display_mode = nil,
-        levels_mode = nil,
-        components = nil,
+        level_height = 200,
+        scale_height = 12,
+        display_mode = "stack", -- Possible options: {"stack", "parade", "overlay"}
+        levels_mode = "linear", -- Possible options: {"linear", "logarithmic"}
+        components = 7,
         fgopacity = 0.7,
         bgopacity = 0.5
     },
+
+    -- The different pixel formats to switch between allow you to see RGB histograms
+    -- for YUV-encoded video and vice-versa, as well as cycle between different bit-
+    -- depths. "default" is a passthrough of the video's original pixel format.
     pixel_fmt = "default",
+    -- As a rule of thumb, pixel formats with an 'a' allow for transparency and look
+    -- prettier, but are also slower, which is why the higher bit-depths have alpha-
+    -- less formats. Get a full list of supported and unsupported formats by running
+    -- mpv with `mpv --vf=format=fmt=help` on the command line.
     fmts_available = { "default", "gray", "gbrap", "gbrp10", "gbrp12", "yuva444p", "yuva444p10", "yuv444p12" },
+
+    -- These options control the positioning of the histogram. `pos` is only respected
+    -- if x and y are nil.
     overlay = {
-        pos = "right-upper",
+        pos = "right-upper", -- Possible options: {"right", "left"}"-"{"lower", "upper"}
         margin = 10,
         x = nil,
         y = nil
     }
 }
+
+--[[ DO NOT EDIT BELOW THIS LINE (except the bindings at the bottom)]]
+
+local mp = require 'mp'
+local msg = require 'mp.msg'
 
 local fa_ri = {}
 
@@ -112,8 +124,6 @@ function rebuildGraph()
 end
 
 function init()
-    opt.read_options(opts, "histogram.conf")
-
     local vf_table = mp.get_property_native("vf")
     vf_table[#vf_table + 1] = {
         enabled=false,
@@ -133,4 +143,4 @@ end
 init()
 mp.add_key_binding("h", "toggle-histogram", toggleFilter)
 mp.add_key_binding("H", "cycle-histogram-pixel-format", cycleFmt)
-mp.add_key_binding("l", "cycle-histogram-levels-mode", cycleLevels)
+mp.add_key_binding("ctrl+h", "cycle-histogram-levels-mode", cycleLevels)
