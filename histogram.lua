@@ -52,7 +52,7 @@ local opts = {
 local mp = require 'mp'
 local msg = require 'mp.msg'
 
-local fa_ri = {}
+local fa_ri = {}    --Reverse index of fmts_available
 
 function buildGraph()
     local o = {}
@@ -141,6 +141,8 @@ function init()
 end
 
 init()
+
+-- If you want to unbind/rebind the keys, you can do that here
 mp.add_key_binding("h", "toggle-histogram", toggleFilter)
 mp.add_key_binding("H", "cycle-histogram-pixel-format", cycleFmt)
 mp.add_key_binding("ctrl+h", "cycle-histogram-levels-mode", cycleLevels)
