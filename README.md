@@ -6,7 +6,7 @@ This is a collection of my own mpv scripts.
 ### Requirements:
   - `xdotool` for Linux users
 
-If you press 'b', the screen instantly pauses and minimises. Called like that
+If you press `b`, the screen instantly pauses and minimises. Called like that
 because you'd want to hide whatever you're watching when your boss (or mom)
 walks in.
 
@@ -20,7 +20,7 @@ opening or ending sequence, at which point there's often a short
 period of silence.
 
 The default keybind is `F3`. You can change this by adding
-the following line to your input.conf:
+the following line to your `input.conf`:
 ```
 KEY script-binding skip-to-silence
 ```
@@ -55,7 +55,7 @@ There are three default keybinds:
  - `Ctrl+h`: Toggle between linear and logarithmic levels
 
 These keybinds can be changed by placing the following lines
-in your input.conf:
+in your `input.conf`:
 ```
 KEY script-binding toggle-histogram
 KEY script-binding cycle-histogram-pixel-format
