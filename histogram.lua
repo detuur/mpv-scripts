@@ -1,18 +1,28 @@
--- AUTHOR: detuur
--- License: MIT
--- link: https://github.com/detuur/mpv-scripts
-
--- This script exposes a configurable way to overlay ffmpeg histograms in mpv.
-
--- There is a substantial amount of config available, but this script does
--- *not* support config files, because of the nested options. Please edit the
--- options in the `opts` array below.
-
--- There are three default keybinds:
---  h - Toggle the histogram on/off
---  H - Cycle between the pixel formats available
---  Ctrl+h - Toggle between linear and logarithmic levels
--- These keybinds can be changed or commented out at the bottom of this file.
+--[[
+  * histogram.lua v.2020-01-25
+  *
+  * AUTHOR: detuur
+  * License: MIT
+  * link: https://github.com/detuur/mpv-scripts
+  * 
+  * This script exposes a configurable way to overlay ffmpeg
+  * histograms in mpv.
+  * 
+  * There are three default keybinds:
+  *     h - Toggle the histogram on/off
+  *     H - Cycle between the pixel formats available
+  *     Ctrl+h - Toggle between linear and logarithmic levels
+  * These keybinds can be changed by placing the following lines
+  * in your input.conf:
+  *     KEY script-binding toggle-histogram
+  *     KEY script-binding cycle-histogram-pixel-format
+  *     KEY script-binding cycle-histogram-levels-mode
+  *
+  * There is a substantial amount of config available, but this
+  * script does *not* support config files, because of the nested
+  * options. Please edit the options directly in the `opts` array
+  * below.
+--]]
 
 local opts = {
     -- These options directly control the `histogram` filter in ffmpeg, consult
@@ -47,7 +57,7 @@ local opts = {
     }
 }
 
---[[ DO NOT EDIT BELOW THIS LINE (except the bindings at the bottom)]]
+--/!\ DO NOT EDIT BELOW THIS LINE /!\
 
 local mp = require 'mp'
 local msg = require 'mp.msg'
@@ -86,14 +96,25 @@ function buildGraph()
 end
 
 function toggleFilter()
-    local vf_table = mp.get_property_native("vf")
     if #vf_table > 0 then
         for i = #vf_table, 1, -1 do
-            if vf_table[i].label == "histo" then
-                vf_table[i].enabled = not vf_table[i].enabled
-                mp.set_property_native("vf", vf_table)
-                return
+            if vf_table[i].label == "histogram" then
+                for j = i, #vf_table-1 do
+                    vf_table[j] = vf_table[j+1]
+                end
+                vf_table[#vf_table] = nil
+            else
+                vf_table[#vf_table + 1] = {
+                    enabled=false,
+                    label="histogram",
+                    name="lavfi",
+                    params= {
+                        graph = buildGraph()
+                    }
+                }
             end
+            mp.set_property_native("vf", vf_table)
+            return
         end
     end
 end
@@ -114,7 +135,7 @@ function rebuildGraph()
     local vf_table = mp.get_property_native("vf")
     if #vf_table > 0 then
         for i = #vf_table, 1, -1 do
-            if vf_table[i].label == "histo" then
+            if vf_table[i].label == "histogram" then
                 vf_table[i].params.graph = buildGraph()
                 mp.set_property_native("vf", vf_table)
                 return
@@ -124,17 +145,6 @@ function rebuildGraph()
 end
 
 function init()
-    local vf_table = mp.get_property_native("vf")
-    vf_table[#vf_table + 1] = {
-        enabled=false,
-        label="histo",
-        name="lavfi",
-        params= {
-            graph = buildGraph()
-        }
-    }
-    mp.set_property_native("vf", vf_table)
-
     for k,v in pairs(opts.fmts_available) do
         fa_ri[v]=k
     end
@@ -142,7 +152,6 @@ end
 
 init()
 
--- If you want to unbind/rebind the keys, you can do that here
 mp.add_key_binding("h", "toggle-histogram", toggleFilter)
 mp.add_key_binding("H", "cycle-histogram-pixel-format", cycleFmt)
 mp.add_key_binding("ctrl+h", "cycle-histogram-levels-mode", cycleLevels)
