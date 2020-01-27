@@ -1,5 +1,5 @@
 --[[
-  * histogram.lua v.2020-01-25
+  * histogram.lua v.2020-01-27
   *
   * AUTHOR: detuur
   * License: MIT
@@ -96,6 +96,7 @@ function buildGraph()
 end
 
 function toggleFilter()
+    local vf_table = mp.get_property_native("vf")
     if #vf_table > 0 then
         for i = #vf_table, 1, -1 do
             if vf_table[i].label == "histogram" then
@@ -105,7 +106,6 @@ function toggleFilter()
                 vf_table[#vf_table] = nil
             else
                 vf_table[#vf_table + 1] = {
-                    enabled=false,
                     label="histogram",
                     name="lavfi",
                     params= {

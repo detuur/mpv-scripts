@@ -44,7 +44,7 @@ duration = 0.1
 mutewhileskipping = no
 ```
 
-## histogram.lua (updated 2020-01-25)
+## histogram.lua (updated 2020-01-27)
 
 This script exposes a configurable way to overlay ffmpeg histograms in mpv.  
 There is a substantial amount of config available, but this script does *not* support config files, because of the nested options. Please edit the options in the `opts` array in the script itself.  
