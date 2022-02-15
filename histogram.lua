@@ -11,7 +11,7 @@
   * There are three default keybinds:
   *     h - Toggle the histogram on/off
   *     H - Cycle between the pixel formats available
-  *     Ctrl+h - Toggle between linear and logarithmic levels
+  *     Alt+h - Toggle between linear and logarithmic levels
   * These keybinds can be changed by placing the following lines
   * in your input.conf:
   *     KEY script-binding toggle-histogram
@@ -158,4 +158,4 @@ init()
 
 mp.add_key_binding("h", "toggle-histogram", toggleFilter)
 mp.add_key_binding("H", "cycle-histogram-pixel-format", cycleFmt)
-mp.add_key_binding("ctrl+h", "cycle-histogram-levels-mode", cycleLevels)
+mp.add_key_binding("Alt+h", "cycle-histogram-levels-mode", cycleLevels)
