@@ -52,7 +52,7 @@ There is a substantial amount of config available, but this script does *not* su
 There are three default keybinds:
  - `h`: Toggle the histogram on/off
  - `H` (`Shift+h`): Cycle between the pixel formats available
- - `Ctrl+h`: Toggle between linear and logarithmic levels
+ - `Alt+h`: Toggle between linear and logarithmic levels
 
 These keybinds can be changed by placing the following lines
 in your `input.conf`:
@@ -61,5 +61,7 @@ KEY script-binding toggle-histogram
 KEY script-binding cycle-histogram-pixel-format
 KEY script-binding cycle-histogram-levels-mode
 ```
+
+If you are using hardware decoding, the histogram will likely not work. However, you can use `Ctrl+h` (mpv default key binding) to toggle hardware decoding on/off on the fly.
 
 ![Shamelessly stolen example from ffmpeg's wiki](https://trac.ffmpeg.org/raw-attachment/wiki/Histogram/histogram_overlay.jpg)
