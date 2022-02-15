@@ -97,26 +97,30 @@ end
 
 function toggleFilter()
     local vf_table = mp.get_property_native("vf")
-    if #vf_table > 0 then
-        for i = #vf_table, 1, -1 do
-            if vf_table[i].label == "histogram" then
-                for j = i, #vf_table-1 do
-                    vf_table[j] = vf_table[j+1]
-                end
-                vf_table[#vf_table] = nil
-            else
-                vf_table[#vf_table + 1] = {
-                    label="histogram",
-                    name="lavfi",
-                    params= {
-                        graph = buildGraph()
-                    }
-                }
+    -- iterate video filters and look for a histogram
+    for i = #vf_table, 1, -1 do
+        if vf_table[i].label == "histogram" then
+            -- histogram found, remove it and fix indices
+            for j = i, #vf_table-1 do
+                vf_table[j] = vf_table[j+1]
             end
+            vf_table[#vf_table] = nil
             mp.set_property_native("vf", vf_table)
+            msg.info("Removed histogram video filter")
+            -- exit function, because a histogram already existed
             return
         end
     end
+    -- no histogram filter found, create one
+    vf_table[#vf_table + 1] = {
+        label="histogram",
+        name="lavfi",
+        params= {
+            graph = buildGraph()
+        }
+    }
+    mp.set_property_native("vf", vf_table)
+    msg.info("Created histogram video filter")
 end
 
 function cycleFmt()
@@ -133,13 +137,13 @@ end
 
 function rebuildGraph()
     local vf_table = mp.get_property_native("vf")
-    if #vf_table > 0 then
-        for i = #vf_table, 1, -1 do
-            if vf_table[i].label == "histogram" then
-                vf_table[i].params.graph = buildGraph()
-                mp.set_property_native("vf", vf_table)
-                return
-            end
+    -- iterate video filters and look for the histogram
+    for i = #vf_table, 1, -1 do
+        if vf_table[i].label == "histogram" then
+            vf_table[i].params.graph = buildGraph()
+            mp.set_property_native("vf", vf_table)
+            msg.info("Rebuild histogram graph")
+            return
         end
     end
 end
