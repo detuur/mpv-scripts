@@ -1,5 +1,5 @@
 --[[
-  * histogram.lua v.2020-01-27
+  * histogram.lua v.2022-01-17
   *
   * AUTHOR: detuur
   * License: MIT
@@ -54,7 +54,14 @@ local opts = {
         margin = 10,
         x = nil,
         y = nil
-    }
+    },
+
+    -- If this option is true and the script detects hardware decoding is used, it
+    -- automatically disables it, when the histogram is toggled on. Once the
+    -- histogram is toggled off again, the previous hardware decoding setting is
+    -- restored. This is necessary, because the histogram video filter will most
+    -- likely not work with hardware decoding.
+    disable_hwdec = true
 }
 
 --/!\ DO NOT EDIT BELOW THIS LINE /!\
@@ -62,7 +69,8 @@ local opts = {
 local mp = require 'mp'
 local msg = require 'mp.msg'
 
-local fa_ri = {}    --Reverse index of fmts_available
+local fa_ri = {}    -- Reverse index of fmts_available
+local hwdec = nil   -- Used to store hardware decoding property
 
 function buildGraph()
     local o = {}
@@ -96,31 +104,36 @@ function buildGraph()
 end
 
 function toggleFilter()
-    local vf_table = mp.get_property_native("vf")
     -- iterate video filters and look for a histogram
-    for i = #vf_table, 1, -1 do
-        if vf_table[i].label == "histogram" then
-            -- histogram found, remove it and fix indices
-            for j = i, #vf_table-1 do
-                vf_table[j] = vf_table[j+1]
+    local video_filters = mp.get_property_native("vf")
+    for _, filter in pairs(video_filters) do
+        if filter["label"] == "histogram" then
+            -- histogram found, remove it
+            mp.command("no-osd vf remove @histogram")
+            msg.info("Removed the histogram video filter")
+            -- restore hardware decoding
+            if hwdec and hwdec ~= "no" then
+                mp.set_property("hwdec", hwdec)
+                msg.info("Restored hardware decoding setting: " .. hwdec)
+                mp.osd_message("Restored hardware decoding setting: " .. hwdec, 2)
             end
-            vf_table[#vf_table] = nil
-            mp.set_property_native("vf", vf_table)
-            msg.info("Removed histogram video filter")
-            -- exit function, because a histogram already existed
+            -- exit function
             return
         end
     end
-    -- no histogram filter found, create one
-    vf_table[#vf_table + 1] = {
-        label="histogram",
-        name="lavfi",
-        params= {
-            graph = buildGraph()
-        }
-    }
-    mp.set_property_native("vf", vf_table)
-    msg.info("Created histogram video filter")
+    -- no histogram filter found
+    if opts.disable_hwdec then
+        -- check for hardware decoding and disable it
+        hwdec = mp.get_property("hwdec")
+        if hwdec ~= "no" then
+            mp.set_property("hwdec", "no")
+            msg.info("Hardware decoding disabled")
+            mp.osd_message("Hardware decoding disabled for the histogram filter", 2)
+        end
+    end
+    -- create histogram video filter
+    mp.command("no-osd vf add @histogram:lavfi=[" .. buildGraph() .. "]")
+    msg.info("Created a histogram video filter")
 end
 
 function cycleFmt()
@@ -136,12 +149,12 @@ function cycleLevels()
 end
 
 function rebuildGraph()
-    local vf_table = mp.get_property_native("vf")
     -- iterate video filters and look for the histogram
-    for i = #vf_table, 1, -1 do
-        if vf_table[i].label == "histogram" then
-            vf_table[i].params.graph = buildGraph()
-            mp.set_property_native("vf", vf_table)
+    local video_filters = mp.get_property_native("vf")
+    for index, filter in pairs(video_filters) do
+        if filter["label"] == "histogram" then
+            video_filters[index].params.graph = buildGraph()
+            mp.set_property_native("vf", video_filters)
             msg.info("Rebuild histogram graph")
             return
         end

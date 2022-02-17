@@ -62,6 +62,6 @@ KEY script-binding cycle-histogram-pixel-format
 KEY script-binding cycle-histogram-levels-mode
 ```
 
-If you are using hardware decoding, the histogram will likely not work. However, you can use `Ctrl+h` (mpv default key binding) to toggle hardware decoding on/off on the fly.
+The histogram video filter will likely not work, if hardware decoding is used. Therefore, if hardware decoding is detected, it is disabled when the histogram is toggled on and the setting is restored when toggled off.
 
 ![Shamelessly stolen example from ffmpeg's wiki](https://trac.ffmpeg.org/raw-attachment/wiki/Histogram/histogram_overlay.jpg)
