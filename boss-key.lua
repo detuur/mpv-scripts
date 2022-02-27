@@ -1,5 +1,5 @@
 --[[
-  * boss-key.lua v1.0.0
+  * boss-key.lua v1.0.1
   * (Older versions will lack a version number)
   *
   * AUTHOR: detuur, zaza42
@@ -13,19 +13,19 @@
   * xdotool is required on Xorg(Linux)
 --]]
 
+utils = require 'mp.utils'
+
 local platform = nil --set to 'linux', 'windows' or 'macos' to override automatic assign
 if not platform then
-  local o = {}
-  if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
-    platform = 'windows'
-  elseif mp.get_property_native('options/input-app-events', o) ~= o then
-    platform = 'macos'
-  else
-    platform = 'linux'
-  end
+    local o = {}
+    if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
+        platform = 'windows'
+    elseif mp.get_property_native('options/input-app-events', o) ~= o then
+        platform = 'macos'
+    else
+        platform = 'linux'
+    end
 end
-
-utils = require 'mp.utils'
 
 -- TODO: macOS implementation?
 function boss_key()
@@ -48,7 +48,7 @@ end
 -- the code below. It's not pretty, but at l(e)ast it works reliably.
 if platform == 'windows' then
     utils.subprocess_detached({
-      args = {'powershell', '-NoProfile', '-Command', [[&{
+        args = {'powershell', '-NoProfile', '-Command', [[&{
 $bosspid = ]]..utils.getpid()..[[
 
 # Construct the named pipe's name
