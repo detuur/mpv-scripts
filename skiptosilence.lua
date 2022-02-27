@@ -1,7 +1,7 @@
 --[[
-  * skiptosilence.lua v.2022-01-17
+  * skiptosilence.lua v.2022-02-27
   *
-  * AUTHOR: detuur
+  * AUTHORS: detuur, microraptor
   * License: MIT
   * link: https://github.com/detuur/mpv-scripts
   * 
@@ -32,15 +32,6 @@ duration = 0.1
 # to mute it while skipping.
 mutewhileskipping = no
 ************************** END OF TEMPLATE **************************
-
-Dev note about the used filters:
-- `silencedetect` is an audio filter that listens for silence and
-emits text output with details whenever silence is detected.
-- `nullsink` interrupts the video stream requests to the decoder,
-which stops it from bogging down the fast-forward.
-- `color` generates a blank image, which renders very quickly and is
-good for fast-forwarding.
-- Filter documentation: https://ffmpeg.org/ffmpeg-filters.html
 --]]
 
 local opts = {
@@ -56,6 +47,17 @@ local options = require 'mp.options'
 old_speed = 1
 was_paused = false
 was_muted = false
+
+--[[
+Dev note about the used filters:
+- `silencedetect` is an audio filter that listens for silence and
+  emits text output with details whenever silence is detected.
+- `nullsink` interrupts the video stream requests to the decoder,
+  which stops it from bogging down the fast-forward.
+- `color` generates a blank image, which renders very quickly and is
+  good for fast-forwarding.
+- Filter documentation: https://ffmpeg.org/ffmpeg-filters.html
+--]]
 
 function doSkip()
     -- Get video dimensions
