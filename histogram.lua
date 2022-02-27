@@ -1,7 +1,7 @@
 --[[
-  * histogram.lua v.2022-01-17
+  * histogram.lua v.2022-02-27
   *
-  * AUTHOR: detuur
+  * AUTHORS: detuur, microraptor
   * License: MIT
   * link: https://github.com/detuur/mpv-scripts
   * 
