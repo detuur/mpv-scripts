@@ -1,12 +1,17 @@
--- AUTHORS: detuur, zaza42
--- License: MIT
--- link: https://github.com/detuur/mpv-scripts
-
--- This script minimises and pauses the window when
--- the boss key (default 'b') is pressed.
--- Can be overwriten in input.conf as follows:
--- KEY script-binding boss-key
--- xdotool is required on Xorg(Linux)
+--[[
+  * boss-key.lua v1.0.0
+  * (Older versions will lack a version number)
+  *
+  * AUTHOR: detuur, zaza42
+  * License: MIT
+  * link: https://github.com/detuur/mpv-scripts
+  * 
+  * This script minimises and pauses the window when
+  * the boss key (default 'b') is pressed.
+  * Can be overwriten in input.conf as follows:
+  * KEY script-binding boss-key
+  * xdotool is required on Xorg(Linux)
+--]]
 
 local platform = nil --set to 'linux', 'windows' or 'macos' to override automatic assign
 if not platform then
