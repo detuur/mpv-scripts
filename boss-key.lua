@@ -1,5 +1,5 @@
 --[[
-  * boss-key.lua v1.0.1
+  * boss-key.lua v1.0.2
   * (Older versions will lack a version number)
   *
   * AUTHOR: detuur, zaza42
@@ -47,7 +47,10 @@ end
 -- and after many, many rewrites, I've arrived at the unorthodox mess that is
 -- the code below. It's not pretty, but at l(e)ast it works reliably.
 if platform == 'windows' then
-    utils.subprocess_detached({
+    mp.command_native_async({
+        name = "subprocess",
+        playback_only = false,
+        detach = true,
         args = {'powershell', '-NoProfile', '-Command', [[&{
 $bosspid = ]]..utils.getpid()..[[
 
@@ -93,7 +96,7 @@ while($true) {
     Start-Sleep 1
     if ($bossproc.HasExited) { $exitsequence.Invoke() }
 }
-}]]}})
+}]]}}, function()end)
 end
 
 mp.add_key_binding('b', 'boss-key', boss_key)
