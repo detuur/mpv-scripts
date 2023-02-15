@@ -72,4 +72,7 @@ The histogram filter is not compatible with hardware decoding. As a result, the
 default behaviour is to automatically disable any hardware decoding while the
 filter is on. This behaviour can be changed in the aforementioned `opts` array.
 
+### Waveform version
+A version of this script adapted by [@MikelSotomonte](https://github.com/MikelSotomonte) for displaying waveforms instead can be found at [his repo](https://github.com/MikelSotomonte/mpv-waveform).
+
 ![Shamelessly stolen example from ffmpeg's wiki](https://trac.ffmpeg.org/raw-attachment/wiki/Histogram/histogram_overlay.jpg)
