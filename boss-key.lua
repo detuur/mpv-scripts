@@ -20,7 +20,7 @@ if not platform then
     local o = {}
     if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
         platform = 'windows'
-    elseif mp.get_property_native('options/input-app-events', o) ~= o then
+    elseif mp.get_property_native('options/macos-force-dedicated-gpu', o) ~= o then
         platform = 'macos'
     else
         platform = 'linux'
@@ -32,6 +32,8 @@ function boss_key()
 	mp.set_property_native("pause", true)
 	if platform == 'windows' then
 	    mp.command([[run cmd /c echo m > \\.\pipe\mpv-boss-key-]]..utils.getpid())
+	elseif platform == 'macos' then
+	    utils.subprocess({ args = {'osascript', '-e', 'tell application "System Events" to set the visible of the first process whose frontmost is true to false'} })
 	elseif platform == 'linux' then
 	    utils.subprocess({ args = {'xdotool', 'getactivewindow', 'windowminimize'} })
 	end
