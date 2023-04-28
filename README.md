@@ -3,11 +3,14 @@ This is a collection of my own mpv scripts. Valuable contributions have been mad
 - [@zaza42](https://github.com/zaza42): Linux implementation of boss-key.lua
 - [@microraptor](https://github.com/microraptor): Bug fixes, streamlining,
   and features to skiptosilence.lua and histogram.lua
+- [@vikas5914](https://github.com/vikas5914): macOS implementation of boss-key.lua
 
-## boss-key.lua (updated 2022-02-27)
+## boss-key.lua (updated 2023-06-28)
 Instantly pauses and minimises the screen at the push of a button (by default
 `b`). Called like that because you'd want to hide whatever you're watching when
 your boss (or mom) walks in.
+
+Supports Windows, macOS, and Linux (X11 only, see requirements).
 
 The default keybind is `b`. You can change this by adding
 the following line to your `input.conf`:
