@@ -1,7 +1,7 @@
 --[[
-  * skiptosilence.lua v.2022-02-27
+  * skiptosilence.lua v.2023-08-13
   *
-  * AUTHORS: detuur, microraptor
+  * AUTHORS: detuur, microraptor, Eisa01
   * License: MIT
   * link: https://github.com/detuur/mpv-scripts
   * 
@@ -23,14 +23,14 @@
 # Maximum amount of noise to trigger, in terms of dB.
 # The default is -30 (yes, negative). -60 is very sensitive,
 # -10 is more tolerant to noise.
-quietness = -30
+quietness=-30
 
 # Minimum duration of silence to trigger.
-duration = 0.1
+duration=0.1
 
 # The fast-forwarded audio can sound jarring. Set to 'yes'
 # to mute it while skipping.
-mutewhileskipping = no
+mutewhileskipping=no
 ************************** END OF TEMPLATE **************************
 --]]
 
@@ -47,6 +47,8 @@ local options = require 'mp.options'
 old_speed = 1
 was_paused = false
 was_muted = false
+saved_sid = nil
+saved_vid = nil
 
 --[[
 Dev note about the used filters:
@@ -63,19 +65,21 @@ function doSkip()
     -- Get video dimensions
     local width = mp.get_property_native("width");
     local height = mp.get_property_native("height")
+    mp.set_property_native("geometry", ("%dx%d"):format(width, height))
 
-    -- Create audio and video filters
+    -- Create filters
     mp.command(
         "no-osd af add @skiptosilence:lavfi=[silencedetect=noise=" ..
         opts.quietness .. "dB:d=" .. opts.duration .. "]"
     )
-    mp.command(
-        "no-osd vf add @skiptosilence-blackout:lavfi=" ..
-        "[nullsink,color=c=black:s=" .. width .. "x" .. height .. "]"
-    )
 
     -- Triggers whenever the `silencedetect` filter emits output
     mp.observe_property("af-metadata/skiptosilence", "string", foundSilence)
+
+    saved_vid = mp.get_property("vid")
+    mp.set_property("vid", "no")
+    saved_sid = mp.get_property("sid")
+    mp.set_property("sid", "no")
 
     was_muted = mp.get_property_native("mute")
     if opts.mutewhileskipping then
@@ -98,15 +102,16 @@ function foundSilence(name, value)
     if timecode == nil or timecode < time_pos + 1 then
         return -- Ignore anything less than a second ahead.
     end
-
+    
+    mp.set_property("vid", saved_vid)
+    mp.set_property("sid", saved_sid)
     mp.set_property_bool("mute", was_muted)
     mp.set_property_bool("pause", was_paused)
     mp.set_property("speed", old_speed)
     mp.unobserve_property(foundSilence)
 
-    -- Remove used audio and video filters
+    -- Remove used filters
     mp.command("no-osd af remove @skiptosilence")
-    mp.command("no-osd vf remove @skiptosilence-blackout")
 
     -- Seeking to the exact moment even though we've already
     -- fast forwarded here allows the video decoder to skip
