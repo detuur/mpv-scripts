@@ -1,5 +1,5 @@
 --[[
-  * skiptosilence.lua v.2023-08-13
+  * skiptosilence.lua v.2023-08-15
   *
   * AUTHORS: detuur, microraptor, Eisa01
   * License: MIT
@@ -19,115 +19,129 @@
   * script-opts/skiptosilence.conf in mpv's user folder. The
   * parameters will be automatically loaded on start.
   *
+  * Dev note about the used filters:
+  * - `silencedetect` is an audio filter that listens for silence and
+  * emits text output with details whenever silence is detected.
+  * Filter documentation: https://ffmpeg.org/ffmpeg-filters.html
 ****************** TEMPLATE FOR skiptosilence.conf ******************
 # Maximum amount of noise to trigger, in terms of dB.
 # The default is -30 (yes, negative). -60 is very sensitive,
 # -10 is more tolerant to noise.
 quietness=-30
 
-# Minimum duration of silence to trigger.
-duration=0.1
-
-# The fast-forwarded audio can sound jarring. Set to 'yes'
-# to mute it while skipping.
-mutewhileskipping=no
+# Minimum duration of the silence that will be detected to trigger skipping.
+silence_duration=0.1
 ************************** END OF TEMPLATE **************************
 --]]
 
 local opts = {
-    quietness = -30,
-    duration = 0.1,
-    mutewhileskipping = false
+	quietness = -30,
+	silence_duration = 0.1,
 }
 
+(require 'mp.options').read_options(opts)
 local mp = require 'mp'
 local msg = require 'mp.msg'
-local options = require 'mp.options'
 
 old_speed = 1
 was_paused = false
-was_muted = false
 saved_sid = nil
 saved_vid = nil
-
---[[
-Dev note about the used filters:
-- `silencedetect` is an audio filter that listens for silence and
-  emits text output with details whenever silence is detected.
-- `nullsink` interrupts the video stream requests to the decoder,
-  which stops it from bogging down the fast-forward.
-- `color` generates a blank image, which renders very quickly and is
-  good for fast-forwarding.
-- Filter documentation: https://ffmpeg.org/ffmpeg-filters.html
---]]
+skip_flag = false
+initial_skip_time = 0
 
 function doSkip()
-    -- Get video dimensions
-    local width = mp.get_property_native("width");
-    local height = mp.get_property_native("height")
-    mp.set_property_native("geometry", ("%dx%d"):format(width, height))
+	if skip_flag then return end
+	-- Get initial time
+	initial_skip_time = mp.get_property_native("time-pos")
+	if math.floor(initial_skip_time) == math.floor(mp.get_property_native('duration')) then return end
+	
+	-- Get video dimensions
+	local width = mp.get_property_native("width");
+	local height = mp.get_property_native("height")
+	mp.set_property_native("geometry", ("%dx%d"):format(width, height))
+	
+	-- Create filters
+	mp.command(
+		"no-osd af add @skiptosilence:lavfi=[silencedetect=noise=" ..
+		opts.quietness .. "dB:d=" .. opts.silence_duration .. "]"
+	)
 
-    -- Create filters
-    mp.command(
-        "no-osd af add @skiptosilence:lavfi=[silencedetect=noise=" ..
-        opts.quietness .. "dB:d=" .. opts.duration .. "]"
-    )
+	-- Triggers whenever the `silencedetect` filter emits output
+	mp.observe_property("af-metadata/skiptosilence", "string", foundSilence)
 
-    -- Triggers whenever the `silencedetect` filter emits output
-    mp.observe_property("af-metadata/skiptosilence", "string", foundSilence)
-
-    saved_vid = mp.get_property("vid")
-    mp.set_property("vid", "no")
-    saved_sid = mp.get_property("sid")
-    mp.set_property("sid", "no")
-
-    was_muted = mp.get_property_native("mute")
-    if opts.mutewhileskipping then
-        mp.set_property_bool("mute", true)
-    end
-
-    was_paused = mp.get_property_native("pause")
-    mp.set_property_bool("pause", false)
-    old_speed = mp.get_property_native("speed")
-    mp.set_property("speed", 100)
+	saved_vid = mp.get_property("vid")
+	mp.set_property("vid", "no")
+	saved_sid = mp.get_property("sid")
+	mp.set_property("sid", "no")
+	was_paused = mp.get_property_native("pause")
+	mp.set_property_bool("pause", false)
+	old_speed = mp.get_property_native("speed")
+	mp.set_property("speed", 100)
+	skip_flag = true
 end
 
 function foundSilence(name, value)
-    if value == "{}" or value == nil then
-        return -- For some reason these are sometimes emitted. Ignore.
-    end
+	if value == "{}" or value == nil then
+		return -- For some reason these are sometimes emitted. Ignore.
+	end
 
-    timecode = tonumber(string.match(value, "%d+%.?%d+"))
-    time_pos = mp.get_property_native("time-pos")
-    if timecode == nil or timecode < time_pos + 1 then
-        return -- Ignore anything less than a second ahead.
-    end
-    
-    mp.set_property("vid", saved_vid)
-    mp.set_property("sid", saved_sid)
-    mp.set_property_bool("mute", was_muted)
-    mp.set_property_bool("pause", was_paused)
-    mp.set_property("speed", old_speed)
-    mp.unobserve_property(foundSilence)
+	timecode = tonumber(string.match(value, "%d+%.?%d+"))
+	time_pos = mp.get_property_native("time-pos")
+	if timecode == nil or timecode < time_pos + 1 then
+		return -- Ignore anything less than a second ahead.
+	end
+	
+	mp.set_property("vid", saved_vid)
+	mp.set_property("sid", saved_sid)
+	mp.set_property_bool("pause", was_paused)
+	mp.set_property("speed", old_speed)
+	mp.unobserve_property(foundSilence)
 
-    -- Remove used filters
-    mp.command("no-osd af remove @skiptosilence")
+	-- Remove used filters
+	mp.command("no-osd af remove @skiptosilence")
 
-    -- Seeking to the exact moment even though we've already
-    -- fast forwarded here allows the video decoder to skip
-    -- the missed video. This prevents massive A-V lag.
-    mp.set_property_number("time-pos", timecode)
+	-- Seeking to the exact moment even though we've already
+	-- fast forwarded here allows the video decoder to skip
+	-- the missed video. This prevents massive A-V lag.
+	mp.set_property_number("time-pos", timecode)
 
-    -- If we don't wait at least 50ms before messaging the user, we
-    -- end up displaying an old value for time-pos.
-    mp.add_timeout(0.05, skippedMessage)
+	-- If we don't wait at least 50ms before messaging the user, we
+	-- end up displaying an old value for time-pos.
+	mp.add_timeout(0.05, skippedMessage)
+	skip_flag = false
 end
+
+mp.observe_property('pause', 'bool', function(name, value)
+	if value and skip_flag then
+		mp.set_property("vid", saved_vid)
+		mp.set_property("sid", saved_sid)
+		mp.set_property("speed", old_speed)
+		mp.unobserve_property(foundSilence)
+		mp.command("no-osd af remove @skiptosilence")
+		mp.set_property_number("time-pos", initial_skip_time)
+		mp.set_property_bool("pause", true)
+		skip_flag = false
+	end
+end)
+
+
+mp.add_hook('on_unload', 9, function()
+	if skip_flag then
+		mp.set_property("vid", saved_vid)
+		mp.set_property("sid", saved_sid)
+		mp.set_property("speed", old_speed)
+		mp.unobserve_property(foundSilence)
+		mp.command("no-osd af remove @skiptosilence")
+		mp.set_property_number("time-pos", mp.get_property_number("time-pos"))
+		mp.set_property_bool("pause", was_paused)
+		skip_flag = false
+	end
+end)
 
 function skippedMessage()
-    msg.info("Skipped to silence at " .. mp.get_property_osd("time-pos"))
-    mp.osd_message("Skipped to silence at " .. mp.get_property_osd("time-pos"))
+	msg.info("Skipped to silence at " .. mp.get_property_osd("time-pos"))
+	mp.osd_message("Skipped to silence at " .. mp.get_property_osd("time-pos"))
 end
-
-options.read_options(opts)
 
 mp.add_key_binding("F3", "skip-to-silence", doSkip)
