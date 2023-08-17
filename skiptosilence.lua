@@ -86,9 +86,7 @@ function foundSilence(name, value)
 		return -- For some reason these are sometimes emitted. Ignore.
 	end
 
-	timecode = tonumber(string.match(value, "%d+%.?%d+"))
-	time_pos = mp.get_property_native("time-pos")
-	if timecode == nil or timecode < time_pos + 1 then
+	if timecode == nil or timecode < initial_skip_time + 1 then
 		return -- Ignore anything less than a second ahead.
 	end
 	
