@@ -32,7 +32,7 @@ silence_duration=0.7
 
 #--(0/#number). The first detcted silence_duration will be ignored for the defined seconds in this option, and it will continue skipping until the next silence_duration.
 # (0 for disabled, or specify seconds).
-ignore_silence_duration=10
+ignore_silence_duration=1
 
 #--(0/#number). Minimum amount of seconds accepted to skip until the configured silence_duration.
 # (0 for disabled, or specify seconds)
