@@ -1,5 +1,5 @@
 --[[
-  * skiptosilence.lua v.2023-08-18
+  * skiptosilence.lua v.2023-08-23
   *
   * AUTHORS: detuur, microraptor, Eisa01
   * License: MIT
@@ -69,6 +69,7 @@ pause_state = false
 mute_state = false
 sid_state = nil
 vid_state = nil
+window_state = nil
 skip_flag = false
 initial_skip_time = 0
 
@@ -77,6 +78,7 @@ function restoreProp(timepos,pause)
 	if not pause then pause = pause_state end
 	
 	mp.set_property("vid", vid_state)
+	mp.set_property("force-window", window_state)
 	mp.set_property("sid", sid_state)
 	mp.set_property_bool("mute", mute_state)
 	mp.set_property("speed", speed_state)
@@ -118,8 +120,8 @@ function doSkip()
 	initial_skip_time = (mp.get_property_native("time-pos") or 0)
 	if math.floor(initial_skip_time) == math.floor(mp.get_property_native('duration') or 0) then return end	
 
-	local width = mp.get_property_native("width");
-	local height = mp.get_property_native("height")
+	local width = mp.get_property_native("osd-width")
+	local height = mp.get_property_native("osd-height")
 	mp.set_property_native("geometry", ("%dx%d"):format(width, height))
 	
 	mp.command(
@@ -129,6 +131,8 @@ function doSkip()
 
 	mp.observe_property("af-metadata/skiptosilence", "string", foundSilence)
 
+	window_state = mp.get_property("force-window")
+	mp.set_property("force-window", "yes")
 	vid_state = mp.get_property("vid")
 	mp.set_property("vid", "no")
 	sid_state = mp.get_property("sid")
