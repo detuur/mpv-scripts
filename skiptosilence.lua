@@ -159,7 +159,7 @@ function foundSilence(name, value)
 	end
 	
 	timecode = tonumber(string.match(value, "%d+%.?%d+"))
-	if timecode == nil or timecode < initial_skip_time + o.ignore_silence_duration then --1.03# this is to ignore silence
+	if timecode == nil or timecode < initial_skip_time + o.ignore_silence_duration then
 		return
 	end
 	
