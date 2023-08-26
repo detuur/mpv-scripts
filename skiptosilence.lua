@@ -67,7 +67,8 @@ local msg = require 'mp.msg'
 speed_state = 1
 pause_state = false
 mute_state = false
-sid_state = nil
+sub_state = nil
+secondary_sub_state = nil
 vid_state = nil
 window_state = nil
 skip_flag = false
@@ -79,13 +80,14 @@ function restoreProp(timepos,pause)
 	
 	mp.set_property("vid", vid_state)
 	mp.set_property("force-window", window_state)
-	mp.set_property("sid", sid_state)
 	mp.set_property_bool("mute", mute_state)
 	mp.set_property("speed", speed_state)
 	mp.unobserve_property(foundSilence)
 	mp.command("no-osd af remove @skiptosilence")
+	mp.set_property_bool("pause", pause)	
 	mp.set_property_number("time-pos", timepos)
-	mp.set_property_bool("pause", pause)
+	mp.set_property("sub-visibility", sub_state)
+	mp.set_property("secondary-sub-visibility", secondary_sub_state)	
 	timer:kill()
 	skip_flag = false
 end
@@ -131,12 +133,14 @@ function doSkip()
 
 	mp.observe_property("af-metadata/skiptosilence", "string", foundSilence)
 
+	sub_state = mp.get_property("sub-visibility")
+	mp.set_property("sub-visibility", "no")
+	secondary_sub_state = mp.get_property("secondary-sub-visibility")
+	mp.set_property("secondary-sub-visibility", "no")
 	window_state = mp.get_property("force-window")
 	mp.set_property("force-window", "yes")
 	vid_state = mp.get_property("vid")
 	mp.set_property("vid", "no")
-	sid_state = mp.get_property("sid")
-	mp.set_property("sid", "no")
 	mute_state = mp.get_property_native("mute")
     if o.force_mute_on_skip then
         mp.set_property_bool("mute", true)
