@@ -1,5 +1,5 @@
 --[[
-  * skiptosilence.lua v.2023-08-23
+  * skiptosilence.lua v.2023-08-27
   *
   * AUTHORS: detuur, microraptor, Eisa01
   * License: MIT
